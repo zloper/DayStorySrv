@@ -1,7 +1,7 @@
 package main
 
 import (
-	"dayHistory/parser"
+	"DayStorySrv/parser"
 	"fmt"
 	"math/rand"
 	"net/http"
