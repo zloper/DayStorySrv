@@ -52,7 +52,7 @@ func FuncProvider(writer http.ResponseWriter, rq *http.Request) {
 	}
 	if rqMsg == "GetDayInfo" {
 		//help: ...:8089/GetDayInfo?date=15_мая
-		date := tools.LstToStr(args["cur"])
+		date := tools.LstToStr(args["date"])
 		rqMsg = Compile(date)
 	}
 
