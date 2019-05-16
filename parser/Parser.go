@@ -71,7 +71,6 @@ func EventsParser(pg *goquery.Document, id string) map[string][]string {
 func FixLinks(selection *goquery.Selection) []string {
 	mainUrl := "https://ru.wikipedia.org"
 	var linksList []string
-	//var img string
 	selection.Find("a").Each(func(i int, linkObj *goquery.Selection) {
 		endUrl, _ := linkObj.Attr("href")
 		if strings.Contains(endUrl, "(") {
@@ -79,9 +78,6 @@ func FixLinks(selection *goquery.Selection) []string {
 			newEnd = strings.TrimSuffix(newEnd, ")")
 			endUrl = "/wiki/" + newEnd
 		}
-		// TODO add at final result (load all page is to long)
-		//img = GetImage(mainUrl + endUrl)
-		//linksList = append(linksList, img)
 		linksList = append(linksList, mainUrl+endUrl)
 	})
 	return linksList
