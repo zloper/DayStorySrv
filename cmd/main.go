@@ -2,11 +2,10 @@ package main
 
 import (
 	"DayStorySrv/parser"
+	"DayStorySrv/tools"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strings"
-	"time"
 )
 
 func main() {
@@ -19,59 +18,23 @@ func main() {
 }
 
 func Compile(date string) string {
-	url := "https://ru.wikipedia.org/wiki/" + date + "#События"
-	news := parser.Parse(url)
-	source := rand.NewSource(time.Now().UnixNano())
-	random := rand.New(source)
-	fmt.Println(random.Intn(10), random.Intn(10))
-	fmt.Println(news.Day)
-	world := 0
-	local := 0
-	if len(news.WorldHolidays) > 0 {
-		world = random.Intn(len(news.WorldHolidays))
-	}
-	if len(news.LocalHolidays) > 0 {
-		local = random.Intn(len(news.LocalHolidays))
-	}
+	news := parser.Parse("https://ru.wikipedia.org/wiki/" + date + "#События")
 
-	keys := make([]string, 0, len(news.Events))
-	for k := range news.Events {
-		keys = append(keys, k)
-	}
-	num := random.Intn(len(news.Events))
-	randomKey := keys[num]
-	lst := news.Events[randomKey]
+	worldHoliday := "мировые праздники: " + tools.GetRandomElem(news.WorldHolidays)
+	localHoliday := "локальные праздники: " + tools.GetRandomElem(news.LocalHolidays)
+	event, links := tools.GetRandomKV(news.Events)
+	links = tools.LinksToImages(links)
 
-	// switch pageUrl <=> imgUrl
-	var linksList []string
-	for index := range lst {
-		img := "https:" + parser.GetImage(lst[index])
-		if strings.HasSuffix(img, ".svg.png") {
-			fmt.Println("bad image")
-		} else {
-			linksList = append(linksList, img)
-		}
-	}
+	link := tools.GetRandomElem(links)
 
-	worldRes := "мировые праздники: "
-	localRes := "локальные праздники: "
-	if len(news.WorldHolidays) > 0 {
-		fmt.Println("международние праздники:", news.WorldHolidays[world])
-		worldRes += news.WorldHolidays[world]
-	} else {
-		worldRes += "None"
-	}
-	if len(news.LocalHolidays) > 0 {
-		fmt.Println("локальные праздники:", news.LocalHolidays[local])
-		localRes += news.LocalHolidays[local]
-	} else {
-		localRes += "None"
-	}
-	fmt.Println(randomKey, linksList)
-	//TODO refactor return
+	result := fmt.Sprintf("сегодня %s \n %s \n %s \n события: %s \n %s",
+		news.Day,
+		worldHoliday,
+		localHoliday,
+		event,
+		link)
 
-	numLinks := random.Intn(len(linksList))
-	return "сегодня " + news.Day + "\n" + worldRes + "\n" + localRes + "\n" + "события: " + randomKey + "\n" + linksList[numLinks]
+	return result
 }
 
 func FuncProvider(writer http.ResponseWriter, rq *http.Request) {
@@ -80,37 +43,20 @@ func FuncProvider(writer http.ResponseWriter, rq *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	args := rq.Form
 
 	if rqMsg == "GetRandomDayInfo" {
-		//help: ...:8089/GetRandomDayInfo?date=15maya
-		date := GetCurrentDate()
+		//help: ...:8089/GetRandomDayInfo
+		date := tools.GetFormatedDate()
+		rqMsg = Compile(date)
+	}
+	if rqMsg == "GetDayInfo" {
+		//help: ...:8089/GetDayInfo?date=15_мая
+		date := tools.LstToStr(args["cur"])
 		rqMsg = Compile(date)
 	}
 
 	if _, err := writer.Write([]byte(rqMsg)); err != nil {
 		panic(err)
 	}
-}
-
-func GetCurrentDate() string {
-	dt := time.Now()
-	mounth := dt.Format("01")
-	dct := map[string]string{ // map literal
-		"01": "января",
-		"02": "февраля",
-		"03": "марта",
-		"04": "апреля",
-		"05": "мая",
-		"06": "июня",
-		"07": "июля",
-		"08": "августа",
-		"09": "сентября",
-		"10": "октября",
-		"11": "ноября",
-		"12": "декабря",
-	}
-
-	day := dt.Format("02")
-	fmt.Println("Current date and time is: ", dct[mounth], day)
-	return day + "_" + dct[mounth]
 }
