@@ -27,6 +27,9 @@ func GetFormatedDate() string {
 	}
 
 	day := dt.Format("02")
+	if strings.HasPrefix(day, "0") {
+		day = strings.Replace(day, "0", "", 1)
+	}
 	fmt.Println("Current date and time is: ", dct[mounth], day)
 	return day + "_" + dct[mounth]
 }
